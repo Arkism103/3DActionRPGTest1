@@ -4,21 +4,21 @@ using UnityEngine;
 
 public class AnimationController : MonoBehaviour
 {
-    //以下使いますよという宣言
-    private CharacterController characterController;
+    //宣言
     private Animator animator;
-    private Vector3 velocity;
+    CharacterController controller;
+    Vector3 moveDirection;
+    public PlayerController playerController;
 
     //inspectorで変更可能にする:移動速度と回転速度
-    [SerializeField]private float walkSpeed = 3;
+    [SerializeField] private float fSpeed = 3.0f;
     [SerializeField]private float derSpeed = 360;
-   
 
     // Start is called before the first frame update
     void Start()
     {
         //キャラクタコントローラを取得しcharacterControllerを実体化
-        characterController = GetComponent<CharacterController>();
+        controller = GetComponent<CharacterController>();
         //アニメーターを取得し以下略
         animator = GetComponent<Animator>();
     }
@@ -26,30 +26,30 @@ public class AnimationController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //キャラクタコントローラが設置している場合に処理（のちにジャンプを追加する場合に分岐）
-        if(characterController.isGrounded)
-        {
-            //x軸を上下キーから、z軸を左右キーから取得?
-            velocity = new Vector3(Input.GetAxis("Horizontal"), 0f, Input.GetAxis("Vertical"));
 
-            //アニメーターのForwardSpeedにz軸の値を代入（縦軸移動）
+        if (playerController.attackBool == false)
+        {
+            controller.Move(moveDirection * Time.deltaTime);
+
+            //カメラの向きを基準に正面を取得
+            Vector3 forward = Camera.main.gameObject.transform.TransformDirection(Vector3.forward);
+            //カメラの側面を基準に横軸を取得
+            Vector3 right = Camera.main.gameObject.transform.TransformDirection(Vector3.right);
+            //上で取得した値を力のかかる向きにする　horizontalはx軸、verticalはz軸の力
+            moveDirection = Input.GetAxis("Horizontal") * right + Input.GetAxis("Vertical") * forward;
+            moveDirection *= fSpeed;
+
+            //アニメーターのForwardSpeedにz軸の値を代入（縦移動のアニメーションを再生する条件）
             animator.SetFloat("ForwardSpeed", Input.GetAxis("Vertical"));
-            //LateralSpeedにx軸の値を代入（横軸移動）
+            //LateralSpeedにx軸の値を代入（横移動のアニメーション）
             animator.SetFloat("LateralSpeed", Input.GetAxis("Horizontal"));
-            //キャラクタコントローラから移動命令、上下左右キーで方向、入力される間
-            characterController.Move(velocity * walkSpeed * Time.deltaTime);
 
-        }
-
-        //走る方向に体を向けたい
-        //カメラの向きを基準に移動する方向を決定したほうがいい？
-
-        //移動したい方向が0.01より大きい場合（方向転換するときは常に条件を満たす）
-        if (velocity.magnitude > 0.01f)
-        {
-            Quaternion q = Quaternion.LookRotation(velocity);
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, q, derSpeed * Time.deltaTime);
-
-        }
+            //移動したい方向が0.01より大きい場合（方向転換するときは常に条件を満たす）
+            if (moveDirection.magnitude > 0.01f)
+            {
+                Quaternion q = Quaternion.LookRotation(moveDirection);
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, q, derSpeed * Time.deltaTime);
+            }            
+        }        
     }
 }

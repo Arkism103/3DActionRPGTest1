@@ -5,48 +5,47 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    public float speed = 1.0f;
-    public float jumpSpeed = 8.0f;
-    public float gravity = 20.0f;
-    public Animator animator;
 
-    private Vector3 latestPos;
+	private Animator animator;
+	public bool attackBool;
+	private const float attackWait = 0.75f;
 
-    // Start is called before the first frame update
-    void Start()
+	// Use this for initialization
+	void Start()
+	{
+		this.animator = GetComponent<Animator>();
+		attackBool = false;
+	}
+
+	// Update is called once per frame
+	void Update()
+	{
+		if (Input.GetKeyDown(KeyCode.Space) && animator.GetFloat("ForwardSpeed") == 0 && animator.GetFloat("LateralSpeed") == 0)
+		{
+			attackBool = true;
+			this.animator.SetBool("AttackMotion1", true);
+			//Invoke("AttackWait", attackWait);
+			StartCoroutine(wait());
+		}
+	}
+	public void attack()
+	{
+		Debug.Log("Attack Ready");
+	}
+	void AttackWait()
     {
-    }
+		attackBool = false;
+		this.animator.SetBool("AttackMotion1", false);
+	}
 
-    // Update is called once per frame
-    void Update()
+	IEnumerator wait()
     {
-        var a = Input.GetAxis("Horizontal");//左右
-        var b = Input.GetAxis("Vertical");//上下
-
-        Vector3 diff = transform.position - latestPos;
-        latestPos = transform.position;
-
-        if(Input.GetKeyDown("up"))
+		Debug.Log("Wait start");
+		while (attackBool == false)
         {
-            transform.position += transform.forward * 0.1f;
-            animator.SetBool("RunBool", true);
-            if(diff.magnitude > 0.01f)
-            {
-                transform.rotation = Quaternion.LookRotation(diff);
-            }
+			yield return null;
         }
-
-        else
-        {
-            animator.SetBool("RunBool", false);
-        }
-        if (Input.GetKey("right"))
-        {
-            transform.Rotate(0, 10, 0);
-        }
-        if (Input.GetKey("left"))
-        {
-            transform.Rotate(0, -10, 0);
-        }
+		//yield return new WaitForSeconds(attackWait);
+		Debug.Log("wait end");
     }
 }
